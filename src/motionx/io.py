@@ -121,12 +121,12 @@ class FrameSink:
         fps: float,
         out_seq: Optional[str] = None,
         out_dir: Optional[str] = None,
-    is_color: bool = False,
+        is_color: bool = False,
     ):
-    self._writer: Optional[cv2.VideoWriter] = None
-    self._template: Optional[str] = None
-    self._counter = 0
-    self._is_color = is_color
+        self._writer: Optional[cv2.VideoWriter] = None
+        self._template: Optional[str] = None
+        self._counter = 0
+        self._is_color = is_color
 
         w, h = frame_size
         # Decide mode:
