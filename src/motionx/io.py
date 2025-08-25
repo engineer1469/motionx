@@ -121,10 +121,12 @@ class FrameSink:
         fps: float,
         out_seq: Optional[str] = None,
         out_dir: Optional[str] = None,
+    is_color: bool = False,
     ):
-        self._writer: Optional[cv2.VideoWriter] = None
-        self._template: Optional[str] = None
-        self._counter = 0
+    self._writer: Optional[cv2.VideoWriter] = None
+    self._template: Optional[str] = None
+    self._counter = 0
+    self._is_color = is_color
 
         w, h = frame_size
         # Decide mode:
@@ -138,7 +140,7 @@ class FrameSink:
             self._template = str(Path(out_dir) / "frame_%06d.png")
         elif output and _is_video_file(output):
             fourcc = cv2.VideoWriter_fourcc(*("mp4v" if output.lower().endswith(".mp4") else "XVID"))
-            self._writer = cv2.VideoWriter(output, fourcc, fps, (w, h), isColor=False)
+            self._writer = cv2.VideoWriter(output, fourcc, fps, (w, h), isColor=is_color)
             if not self._writer.isOpened():
                 raise RuntimeError(f"Could not create video writer: {output}")
         elif output and _looks_like_pattern(output):
@@ -152,7 +154,17 @@ class FrameSink:
 
     def write(self, frame_gray_or_mask: np.ndarray) -> None:
         if self._writer is not None:
-            self._writer.write(frame_gray_or_mask)
+            frame = frame_gray_or_mask
+            # handle color/grayscale conversion
+            if self._is_color:
+                # if input is grayscale, convert to BGR
+                if frame.ndim == 2:
+                    frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+            else:
+                # expect grayscale; if input is color, convert to gray
+                if frame.ndim == 3:
+                    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            self._writer.write(frame)
         elif self._template:
             fname = self._template % self._counter
             self._counter += 1
