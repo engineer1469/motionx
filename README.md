@@ -1,7 +1,7 @@
 # 🌀 motionx
 
 **motionx** is a lightweight Python library + CLI tool for **motion extraction in videos or image sequences**.  
-It builds on **OpenCV** and provides a clean, modern API for frame differencing, background subtraction, and more advanced motion analysis (coming soon).
+It builds on **OpenCV** and provides a clean, modern API for frame differencing, background subtraction, and a colorized weighted motion highlighting method.
 
 ---
 
@@ -9,7 +9,8 @@ It builds on **OpenCV** and provides a clean, modern API for frame differencing,
 
 - 📽️ **Frame differencing** (consecutive grayscale subtraction + thresholding)
 - 🧩 **Background subtraction (MOG2)** with shadow detection
-- 🖼️ Returns **binary motion masks** (0 = static, 255 = motion)
+- 🎨 **Weighted motion (color)**: blend current frame with inverted delayed frame
+- 🖼️ Returns **binary motion masks** (diff/mog2) or **color motion** (weighted)
 - 📂 Supports **video files, webcams, and image sequences**
 - 🛠️ Easy to integrate into **Python pipelines**
 - 💻 Comes with a **CLI tool** for quick conversion
@@ -43,7 +44,7 @@ pip install -e .
 import cv2
 from motionx import MotionExtractor
 
-# Initialize with "diff" (frame differencing) or "mog2" (background subtraction)
+# Initialize with "diff", "mog2", or "weighted"
 me = MotionExtractor(method="diff")
 
 cap = cv2.VideoCapture("input.mp4")
@@ -52,8 +53,9 @@ while True:
     if not ok:
         break
 
-    mask = me.process(frame)  # uint8 mask: 0 = static, 255 = motion
-    cv2.imshow("Motion Mask", mask)
+    motion = me.process(frame)  # mask (diff/mog2) or color (weighted)
+    win = "Motion (mask/color)"
+    cv2.imshow(win, motion)
 
     if cv2.waitKey(30) == 27:  # ESC
         break
@@ -86,6 +88,22 @@ motionx -i frames/ --in-fps 24 -o motion_mask.mp4 --method diff
 motionx -i "frames/*.png" --in-fps 30 --out-seq "out/mask_%06d.png"
 ```
 
+#### Weighted motion (color output)
+The weighted method produces a color visualization by blending the current frame with the inverted previous (or delayed) frame:
+
+- `alpha`: weight for the current frame
+- `beta`: weight for the inverted previous frame
+- `offset`: how many frames back to reference (1 = immediate previous)
+
+Example:
+```bash
+motionx -i input.mp4 -o weighted.mp4 --method weighted --alpha 0.6 --beta 0.6 --offset 2
+```
+
+Notes:
+- Weighted mode writes a color video (`--o weighted.mp4`) automatically.
+- If writing an image sequence, color PNGs/JPEGs are produced.
+
 ---
 
 ## ⚙️ Configuration
@@ -99,6 +117,14 @@ motionx -i "frames/*.png" --in-fps 30 --out-seq "out/mask_%06d.png"
 | `morph_iters` | 1       | Dilation iterations |
 
 ### Background Subtraction (`method="mog2"`)
+### Weighted Motion (`method="weighted"`)
+| Parameter  | Default | Description |
+|------------|---------|-------------|
+| `alpha`    | 0.5     | Blend weight for current frame |
+| `beta`     | 0.5     | Blend weight for inverted delayed frame |
+| `offset`   | 1       | Number of frames to delay (>=1) |
+
+The output is a full-color image where static regions tend toward neutral gray (~127), and motion regions become more vivid due to blending with the inverted previous frame.
 | Parameter        | Default | Description |
 |------------------|---------|-------------|
 | `history`        | 500     | Frames to build background model |
@@ -133,6 +159,7 @@ pip install -U pip
 pip install -e ".[dev]"
 
 # Run tests
+python -m pip install pytest
 pytest -q
 
 # Code formatting + linting

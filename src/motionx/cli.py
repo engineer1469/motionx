@@ -9,7 +9,7 @@ def main() -> None:
     p.add_argument("-i", "--input", required=True,
                    help="Input video path, webcam index (e.g. 0), directory, glob, or printf pattern (e.g. img_%06d.png)")
     p.add_argument("-o", "--output", help="Output video path (e.g. out.mp4). Not required if using --out-seq/--out-dir.")
-    p.add_argument("--method", choices=["diff", "mog2"], default="diff")
+    p.add_argument("--method", choices=["diff", "mog2", "weighted"], default="diff")
 
     # Diff params
     p.add_argument("--thresh", type=int, default=25)
@@ -21,6 +21,14 @@ def main() -> None:
     p.add_argument("--history", type=int, default=500)
     p.add_argument("--varthr", type=float, default=16.0)
     p.add_argument("--no-shadows", action="store_true")
+
+    # Weighted params
+    p.add_argument("--alpha", type=float, default=0.5,
+                   help="Blending weight for the current frame (weighted)")
+    p.add_argument("--beta", type=float, default=0.5,
+                   help="Blending weight for the inverted previous frame (weighted)")
+    p.add_argument("--offset", type=int, default=1,
+                   help="Frame offset for weighted motion")
 
     # I/O extras
     p.add_argument("--in-fps", type=float, default=None,
@@ -44,7 +52,12 @@ def main() -> None:
         history=args.history, var_threshold=args.varthr, detect_shadows=not args.no_shadows
     )
 
-    extractor = MotionExtractor(method=args.method, diff_params=diff_params, mog2_params=mog2_params)
+    from .core import WeightedParams
+    weighted_params = WeightedParams(alpha=args.alpha, beta=args.beta, offset=args.offset)
+    extractor = MotionExtractor(method=args.method,
+                                diff_params=diff_params,
+                                mog2_params=mog2_params,
+                                weighted_params=weighted_params)
 
     # Input
     try:
@@ -56,12 +69,15 @@ def main() -> None:
 
     # Output
     out_fps = args.out_fps or info.fps
+    # determine whether the output should be color
+    is_color = (args.method == "weighted")
     sink = FrameSink(
         output=args.output,
         frame_size=(info.width, info.height),
         fps=out_fps,
         out_seq=args.out_seq,
         out_dir=args.out_dir,
+        is_color=is_color,
     )
 
     while True:
