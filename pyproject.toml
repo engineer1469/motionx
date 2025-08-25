@@ -1,0 +1,26 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "motionx"
+version = "0.1.0"
+description = "Tiny motion extraction library powered by OpenCV."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Sepp Beld" }]
+dependencies = [
+  "opencv-python>=4.9.0",
+  "numpy>=1.23",
+  "typing-extensions>=4.9; python_version<'3.11'"
+]
+
+[project.urls]
+Homepage = "https://github.com/engineer1469/motionx"
+
+[project.scripts]
+motionx = "motionx.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/motionx"]

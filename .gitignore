@@ -1,0 +1,46 @@
+# Virtual environments
+.venv/
+venv/
+
+# Python bytecode/cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Test/coverage
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# Linters/type checkers
+.mypy_cache/
+.ruff_cache/
+.pytype/
+.tox/
+.nox/
+.cache/
+
+# Env/config
+.env
+.env.*
+.python-version
+
+# Editors/OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Project-specific media (consider Git LFS if you need to track)
+Footage/
